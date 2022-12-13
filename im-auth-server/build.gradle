@@ -1,0 +1,52 @@
+plugins {
+    id 'org.springframework.boot' version '3.0.0'
+//    id 'org.graalvm.buildtools.native' version '0.9.18'
+}
+
+ext {
+    set('testcontainersVersion', "1.17.6")
+    set('jwtVersion', '4.2.1')
+}
+
+dependencies {
+    implementation project(':im-auth-common')
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+//    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+    implementation "com.auth0:java-jwt:${jwtVersion}"
+
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'org.testcontainers:junit-jupiter'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.testcontainers:testcontainers-bom:${testcontainersVersion}"
+    }
+}
+
+tasks.named('bootBuildImage') {
+    builder = 'paketobuildpacks/builder:base'
+    environment = [
+            "BP_JVM_VERSION"              : "17",
+            "BPE_DELIM_JAVA_TOOL_OPTIONS" : " ",
+            "BPE_APPEND_JAVA_TOOL_OPTIONS": "-XX:+HeapDumpOnOutOfMemoryError",
+    ]
+    imageName = "chiayungluk/im-auth:${project.version}"
+    tags = ['chiayungluk/im-auth:latest']
+    docker {
+        publishRegistry {
+            url = "https://hub.docker.com/repository/docker"
+            username = project.findProperty("DOCKERHUB_USERNAME") ?: System.getenv("DOCKERHUB_USERNAME");
+            password = project.findProperty("DOCKERHUB_TOKEN") ?: System.getenv("DOCKERHUB_TOKEN")
+        }
+    }
+}

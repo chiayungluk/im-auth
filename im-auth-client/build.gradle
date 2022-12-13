@@ -1,0 +1,54 @@
+plugins {
+    id 'org.springframework.boot' version '3.0.0'
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+ext {
+    set('nettyVersion', "4.1.86.Final")
+}
+
+dependencies {
+    implementation project(':im-auth-common')
+
+    api 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation "io.netty:netty-all:${nettyVersion}"
+
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/chiayungluk/im-auth")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+    publications {
+        gpr(MavenPublication) {
+            from components.java
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+        }
+    }
+}

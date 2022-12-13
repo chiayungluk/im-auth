@@ -1,0 +1,5 @@
+rootProject.name = 'im-auth'
+include 'im-auth-server'
+include 'im-auth-client'
+include 'im-auth-common'
+
